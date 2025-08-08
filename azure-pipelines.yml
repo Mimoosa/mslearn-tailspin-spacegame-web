@@ -1,0 +1,17 @@
+pool:
+  vmImage: "ubuntu-latest" # Microsoftが提供するLinuxホスト環境
+
+steps:
+  - task: UseDotNet@2
+    inputs:
+      packageType: "sdk"
+      version: "8.0.x" # .NET 8 SDKを使用（必要に応じて 6.x や 7.x に変更可能）
+
+  - script: dotnet restore
+    displayName: "Restore dependencies"
+
+  - script: dotnet build
+    displayName: "Build project"
+
+  - script: dotnet test
+    displayName: "Run tests"
