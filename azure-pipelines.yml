@@ -54,7 +54,7 @@ steps:
     displayName: "Publish the project - Release"
     inputs:
       command: "publish"
-      projects: "**/*.csproj"
+      projects: "Tailspin.SpaceGame.Web/Tailspin.SpaceGame.Web.csproj"
       publishWebProjects: false
       arguments: "--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/Release"
       zipAfterPublish: true
