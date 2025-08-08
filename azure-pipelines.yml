@@ -1,65 +1,17 @@
-trigger:
-  - "*"
-
 pool:
-  vmImage: ubuntu-latest
-
-variables:
-  buildConfiguration: "Release"
+  vmImage: "ubuntu-latest" # Microsoftが提供するLinuxホスト環境
 
 steps:
-  # 🔧 Node.jsのバージョンを指定（v18.x）
-  - task: NodeTool@0
-    displayName: "Install Node.js 18.x"
-    inputs:
-      versionSpec: "18.x"
-
   - task: UseDotNet@2
-    displayName: "Use .NET SDK 6.x"
     inputs:
-      packageType: sdk
-      version: "6.x"
+      packageType: "sdk"
+      version: "8.0.x" # .NET 8 SDKを使用（必要に応じて 6.x や 7.x に変更可能）
 
-  - task: Npm@1
-    displayName: "Run npm install"
-    inputs:
-      verbose: false
+  - script: dotnet restore
+    displayName: "Restore dependencies"
 
-  # ✅ Sassコンパイル（node-sass → sass に変更する場合はここも修正）
-  - script: "./node_modules/.bin/node-sass Tailspin.SpaceGame.Web/wwwroot --output Tailspin.SpaceGame.Web/wwwroot"
-    displayName: "Compile Sass assets"
+  - script: dotnet build
+    displayName: "Build project"
 
-  - task: gulp@1
-    displayName: "Run gulp tasks"
-
-  - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
-    displayName: "Write build info"
-    workingDirectory: Tailspin.SpaceGame.Web/wwwroot
-
-  - task: DotNetCoreCLI@2
-    displayName: "Restore project dependencies"
-    inputs:
-      command: "restore"
-      projects: "Tailspin.SpaceGame.Web/Tailspin.SpaceGame.Web.csproj"
-
-  - task: DotNetCoreCLI@2
-    displayName: "Build the project - Release"
-    inputs:
-      command: "build"
-      arguments: "--no-restore --configuration $(buildConfiguration)"
-      projects: "Tailspin.SpaceGame.Web/Tailspin.SpaceGame.Web.csproj"
-
-  # 📦 アプリの成果物を .zip にパッケージ
-  - task: DotNetCoreCLI@2
-    displayName: "Publish the project - Release"
-    inputs:
-      command: "publish"
-      projects: "Tailspin.SpaceGame.Web/Tailspin.SpaceGame.Web.csproj"
-      publishWebProjects: false
-      arguments: "--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/Release"
-      zipAfterPublish: true
-
-  # 🚀 成果物を Azure Pipelines に公開
-  - task: PublishBuildArtifacts@1
-    displayName: "Publish Artifact: drop"
-    condition: succeeded()
+  - script: dotnet test
+    displayName: "Run tests"
