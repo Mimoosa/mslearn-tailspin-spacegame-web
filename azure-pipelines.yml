@@ -1,17 +1,43 @@
+trigger:
+  - "*"
+
 pool:
-  vmImage: "ubuntu-latest" # Microsoftが提供するLinuxホスト環境
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: "Release"
 
 steps:
   - task: UseDotNet@2
+    displayName: "Use .NET SDK 6.x"
     inputs:
-      packageType: "sdk"
-      version: "8.0.x" # .NET 8 SDKを使用（必要に応じて 6.x や 7.x に変更可能）
+      packageType: sdk
+      version: "6.x"
 
-  - script: dotnet restore
-    displayName: "Restore dependencies"
+  - task: Npm@1
+    displayName: "Run npm install"
+    inputs:
+      verbose: false
 
-  - script: dotnet build
-    displayName: "Build project"
+  - script: "./node_modules/.bin/node-sass Tailspin.SpaceGame.Web/wwwroot --output Tailspin.SpaceGame.Web/wwwroot"
+    displayName: "Compile Sass assets"
 
-  - script: dotnet test
-    displayName: "Run tests"
+  - task: gulp@1
+    displayName: "Run gulp tasks"
+
+  - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
+    displayName: "Write build info"
+    workingDirectory: Tailspin.SpaceGame.Web/wwwroot
+
+  - task: DotNetCoreCLI@2
+    displayName: "Restore project dependencies"
+    inputs:
+      command: "restore"
+      projects: "**/*.csproj"
+
+  - task: DotNetCoreCLI@2
+    displayName: "Build the project - Release"
+    inputs:
+      command: "build"
+      arguments: "--no-restore --configuration Release"
+      projects: "**/*.csproj"
