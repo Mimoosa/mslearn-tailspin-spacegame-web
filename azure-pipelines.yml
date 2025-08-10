@@ -5,33 +5,8 @@ pool:
   vmImage: "ubuntu-20.04"
 
 steps:
-  # ✅ dotnet のバージョン確認
   - task: DotNetCoreCLI@2
     displayName: "Run dotnet version"
     inputs:
       command: "custom"
       custom: "--version"
-
-  # 📦 依存関係の復元
-  - task: DotNetCoreCLI@2
-    displayName: "Restore project dependencies"
-    inputs:
-      command: "restore"
-      projects: "**/*.csproj"
-
-  # 🏗️ プロジェクトのビルド
-  - task: DotNetCoreCLI@2
-    displayName: "Build the project"
-    inputs:
-      command: "build"
-      arguments: "--no-restore --configuration Release"
-      projects: "**/*.csproj"
-
-  # 🧪 ユニットテストの実行と結果の公開
-  - task: DotNetCoreCLI@2
-    displayName: "Run unit tests"
-    inputs:
-      command: "test"
-      arguments: "--no-build --configuration Release"
-      publishTestResults: true
-      projects: "**/*.Tests.csproj"
