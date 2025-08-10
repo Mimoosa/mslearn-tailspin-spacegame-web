@@ -3,65 +3,35 @@ trigger:
 
 pool:
   vmImage: "ubuntu-20.04"
-  demands:
-    - npm
-
-variables:
-  buildConfiguration: "Release"
-  wwwrootDir: "Tailspin.SpaceGame.Web/wwwroot"
-  dotnetSdkVersion: "6.x"
 
 steps:
-  - task: UseDotNet@2
-    displayName: "Use .NET SDK $(dotnetSdkVersion)"
+  # ✅ dotnet のバージョン確認
+  - task: DotNetCoreCLI@2
+    displayName: "Run dotnet version"
     inputs:
-      version: "$(dotnetSdkVersion)"
+      command: "custom"
+      custom: "--version"
 
-  - task: Npm@1
-    displayName: "Run npm install"
-    inputs:
-      verbose: false
-
-  - script: "./node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)"
-    displayName: "Compile Sass assets"
-
-  - task: gulp@1
-    displayName: "Run gulp tasks"
-
-  - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
-    displayName: "Write build info"
-    workingDirectory: $(wwwrootDir)
-
+  # 📦 依存関係の復元
   - task: DotNetCoreCLI@2
     displayName: "Restore project dependencies"
     inputs:
       command: "restore"
       projects: "**/*.csproj"
 
+  # 🏗️ プロジェクトのビルド
   - task: DotNetCoreCLI@2
-    displayName: "Build the project - $(buildConfiguration)"
+    displayName: "Build the project"
     inputs:
       command: "build"
-      arguments: "--no-restore --configuration $(buildConfiguration)"
+      arguments: "--no-restore --configuration Release"
       projects: "**/*.csproj"
 
+  # 🧪 ユニットテストの実行と結果の公開
   - task: DotNetCoreCLI@2
-    displayName: "Run unit tests - $(buildConfiguration)"
+    displayName: "Run unit tests"
     inputs:
       command: "test"
-      arguments: "--no-build --configuration $(buildConfiguration)"
+      arguments: "--no-build --configuration Release"
       publishTestResults: true
       projects: "**/*.Tests.csproj"
-
-  - task: DotNetCoreCLI@2
-    displayName: "Publish the project - $(buildConfiguration)"
-    inputs:
-      command: "publish"
-      projects: "**/*.csproj"
-      publishWebProjects: false
-      arguments: "--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)"
-      zipAfterPublish: true
-
-  - task: PublishBuildArtifacts@1
-    displayName: "Publish Artifact: drop"
-    condition: succeeded()
